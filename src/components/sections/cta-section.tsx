@@ -15,7 +15,7 @@ export function CTASection() {
           size="lg" 
           className="mb-6 bg-custom-green text-black border-custom-green hover:bg-white hover:text-black font-bold"
         >
-          <Link href="#demo">
+          <Link href="/auth">
             Get Started — It's Free
           </Link>
         </Button>

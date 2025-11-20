@@ -1,4 +1,5 @@
 import Image from 'next/image'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { ChevronDown } from 'lucide-react'
 
@@ -36,9 +37,9 @@ export function HeroSection() {
 
                     <div className="flex justify-end mb-[clamp(50px,10vw,200px)]">
                         <Button asChild>
-                            <a href="#demo">
-                                Discover Orchestor →
-                            </a>
+                            <Link href="/auth">
+                                Get Started →
+                            </Link>
                         </Button>
                     </div>
 
