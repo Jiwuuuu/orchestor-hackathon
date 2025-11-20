@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
+import { Button } from '@/components/ui/button'
 
 export function Navbar() {
   const [currentTime, setCurrentTime] = useState('1:05 BANGKOK, TH')
@@ -26,9 +28,11 @@ export function Navbar() {
       </div>
 
       <div className="flex flex-row 1.5xl:flex-col justify-between 1.5xl:justify-between items-center 1.5xl:items-end w-full 1.5xl:w-auto h-auto 1.5xl:h-full gap-5 1.5xl:gap-[clamp(50px,8vw,80px)] mt-4 1.5xl:mt-0">
-        <div className="text-[clamp(24px,3vw,40px)] font-normal text-black">
-          MENU
-        </div>
+        <Button asChild variant="outline" size="sm">
+          <Link href="/auth">
+            Sign In
+          </Link>
+        </Button>
         <div className="text-[clamp(14px,2vw,20px)] text-black whitespace-nowrap">
           {currentTime}
         </div>
