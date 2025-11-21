@@ -1,41 +1,57 @@
-export function StatsCards() {
-  const stats = [
-    {
-      label: "TOTAL POSTS",
-      value: "127",
-      change: "+12 this month",
-    },
-    {
-      label: "SCHEDULED",
-      value: "23",
-      change: "Next 7 days",
-    },
-    {
-      label: "PUBLISHED",
-      value: "104",
-      change: "All time",
-    },
-    {
-      label: "ENGAGEMENT",
-      value: "12.5K",
-      change: "+8.2% vs last week",
-    },
-  ];
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-[clamp(15px,2vw,20px)]">
-      {stats.map((stat, index) => (
-        <div
-          key={index}
-          className="bg-white rounded-[10px] border-2 border-black shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] px-[clamp(20px,3vw,30px)] py-[clamp(20px,3vw,10px)]"
-        >
-          <p className="text-[12px] text-gray-600 font-medium">{stat.label}</p>
-          <p className="text-[clamp(32px,4vw,48px)] font-bold mb-1">
-            {stat.value}
-          </p>
-          <p className="text-[14px] text-gray-500 mt-8">{stat.change}</p>
+interface StatCardProps {
+    title: string
+    value: string
+    description: string
+}
+
+const statData: StatCardProps[] = [
+    {
+        title: 'Total Posts',
+        value: '127',
+        description: '+12 this month'
+    },
+    {
+        title: 'Scheduled',
+        value: '23',
+        description: 'Next 7 days'
+    },
+    {
+        title: 'Published',
+        value: '104',
+        description: 'All time'
+    },
+    {
+        title: 'Engagement',
+        value: '12.5K',
+        description: '+8.2% vs last week'
+    }
+]
+
+export function StatsCards() {
+    return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-[clamp(20px,3vw,30px)] mb-[clamp(30px,4vw,40px)]">
+            {statData.map((stat, index) => (
+                <Card
+                    key={index}
+                    className="border-2 border-black bg-white shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] transition-shadow"
+                >
+                    <CardHeader className="pb-3">
+                        <CardDescription className="text-black/60 text-[clamp(12px,1.5vw,14px)] uppercase tracking-wider">
+                            {stat.title}
+                        </CardDescription>
+                        <CardTitle className="text-[clamp(36px,5vw,48px)] font-bold text-black">
+                            {stat.value}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-[clamp(12px,1.5vw,14px)] text-black/60">
+                            {stat.description}
+                        </p>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
-      ))}
-    </div>
-  );
+    )
 }
