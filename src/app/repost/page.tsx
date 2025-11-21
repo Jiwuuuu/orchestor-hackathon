@@ -16,31 +16,11 @@ interface UploadedFile {
     data: string
 }
 
-interface RepostRecommendation {
-    id: number
-    originalPost: {
-        title: string
-        platform: string
-        publishedDate: string
-        performance: {
-            views: number
-            likes: number
-            comments: number
-            shares: number
-            engagementRate: number
-        }
-    }
-    recommendation: {
-        score: number
-        reason: string
-        suggestedDate: string
-        suggestedTime: string
-        improvements: string[]
-    }
-}
+import type { RepostRecommendation } from '@/lib/mock-data'
+import { mockRepostRecommendations as mockRecommendations } from '@/lib/mock-data'
 
-// Mock recommendations data
-const mockRecommendations: RepostRecommendation[] = [
+// Mock recommendations data - now imported from centralized location
+const _mockRecommendations: RepostRecommendation[] = [
     {
         id: 1,
         originalPost: {

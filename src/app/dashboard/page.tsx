@@ -33,7 +33,7 @@ export default function DashboardPage() {
                 </div>
 
                 {/* Stats Grid */}
-                <StatsCards className="mb-[clamp(40px,6vw,60px)]" />
+                <StatsCards />
 
                 {/* Content Grid */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-[clamp(30px,4vw,40px)] mb-[clamp(30px,4vw,40px)]">
