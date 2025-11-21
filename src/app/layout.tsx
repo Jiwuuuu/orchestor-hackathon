@@ -5,6 +5,9 @@ import { SmoothScrollProvider } from '@/components/smooth-scroll-provider'
 export const metadata: Metadata = {
   title: 'Orchestor',
   description: 'Turn Asana tasks into ready-to-publish social media posts—automatically. Built with IBM watsonx Orchestrate.',
+  icons: {
+    icon: '/orchestor.svg',
+  },
 }
 
 export default function RootLayout({
