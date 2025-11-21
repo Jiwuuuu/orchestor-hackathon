@@ -58,7 +58,8 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
 
     const columns: ColumnDef<RepostRecommendation>[] = [
         {
-            accessorKey: 'originalPost.title',
+            id: 'title',
+            accessorFn: (row) => row.originalPost.title,
             header: ({ column }) => {
                 return (
                     <Button
@@ -76,14 +77,16 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
             ),
         },
         {
-            accessorKey: 'originalPost.platform',
+            id: 'platform',
+            accessorFn: (row) => row.originalPost.platform,
             header: 'Platform',
             cell: ({ row }) => (
                 <div className="capitalize text-sm">{row.original.originalPost.platform}</div>
             ),
         },
         {
-            accessorKey: 'originalPost.publishedDate',
+            id: 'publishedDate',
+            accessorFn: (row) => row.originalPost.publishedDate,
             header: ({ column }) => {
                 return (
                     <Button
@@ -102,7 +105,8 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
             },
         },
         {
-            accessorKey: 'originalPost.performance.engagementRate',
+            id: 'engagementRate',
+            accessorFn: (row) => row.originalPost.performance.engagementRate,
             header: ({ column }) => {
                 return (
                     <Button
@@ -118,7 +122,8 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
             cell: ({ row }) => <div className="text-sm font-medium">{row.original.originalPost.performance.engagementRate}%</div>,
         },
         {
-            accessorKey: 'recommendation.score',
+            id: 'score',
+            accessorFn: (row) => row.recommendation.score,
             header: ({ column }) => {
                 return (
                     <Button
@@ -138,7 +143,8 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
             },
         },
         {
-            accessorKey: 'recommendation.suggestedDate',
+            id: 'suggestedDate',
+            accessorFn: (row) => row.recommendation.suggestedDate,
             header: 'Repost Date',
             cell: ({ row }) => {
                 const date = new Date(row.original.recommendation.suggestedDate)
@@ -192,9 +198,9 @@ export function RepostDataTable({ data, onView }: RepostDataTableProps) {
             <div className="flex items-center py-4">
                 <Input
                     placeholder="Filter by title..."
-                    value={(table.getColumn('originalPost.title')?.getFilterValue() as string) ?? ''}
+                    value={(table.getColumn('title')?.getFilterValue() as string) ?? ''}
                     onChange={(event) =>
-                        table.getColumn('originalPost.title')?.setFilterValue(event.target.value)
+                        table.getColumn('title')?.setFilterValue(event.target.value)
                     }
                     className="max-w-sm border-2 border-black text-sm h-10"
                 />
