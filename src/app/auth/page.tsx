@@ -1,11 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { useSignInMutation, useSignUpMutation, authKeys, type User } from '@/services/auth'
+import { resolveErrorMessage } from '@/lib/helper/error-helper'
 
 type AuthMode = 'signin' | 'signup'
 
@@ -13,20 +16,56 @@ export default function AuthPage() {
     const [mode, setMode] = useState<AuthMode>('signin')
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
-    const [name, setName] = useState('')
+    const [fullname, setFullname] = useState('')
+    const [error, setError] = useState('')
     const router = useRouter()
+    const queryClient = useQueryClient()
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const signInMutation = useSignInMutation()
+    const signUpMutation = useSignUpMutation()
+
+    // Redirect to dashboard if user is already logged in
+    useEffect(() => {
+        const user = queryClient.getQueryData<User>(authKeys.me())
+        if (user) {
+            router.replace('/dashboard')
+        }
+    }, [queryClient, router])
+
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-        // TODO: Backend authentication will go here
-        console.log('Auth attempt:', { mode, email, password, name })
-        // For now, just redirect to dashboard
-        router.push('/dashboard')
+        setError('')
+
+        try {
+            if (mode === 'signup') {
+                // Sign up with email, password, and fullname
+                await signUpMutation.mutateAsync({
+                    email,
+                    password,
+                    fullname
+                })
+            } else {
+                // Sign in with email and password
+                await signInMutation.mutateAsync({
+                    email,
+                    password
+                })
+            }
+
+            // Session cookie is set automatically by backend
+            // Navigate to dashboard
+            router.push('/dashboard')
+        } catch (unknownError) {
+            // Handle errors with centralized error resolver
+            setError(resolveErrorMessage(unknownError))
+        }
     }
 
     const handleDemo = () => {
         router.push('/dashboard')
     }
+
+    const isLoading = signInMutation.isPending || signUpMutation.isPending
 
     return (
         <div className="min-h-screen bg-custom-green flex items-center justify-center p-[clamp(20px,4vw,40px)]">
@@ -60,11 +99,21 @@ export default function AuthPage() {
                     </CardHeader>
 
                     <CardContent>
+                        {/* Error Display */}
+                        {error && (
+                            <div className="mb-4 p-4 border-2 border-red-500 bg-red-50 rounded-lg">
+                                <p className="text-[clamp(14px,1.5vw,16px)] text-red-700 font-medium">
+                                    {error}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Google Sign In */}
                         <Button
                             type="button"
                             variant="outline"
                             className="w-full h-[52px] text-[clamp(16px,1.5vw,18px)] font-medium mb-6"
+                            disabled
                         >
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
@@ -90,15 +139,15 @@ export default function AuthPage() {
                         <form onSubmit={handleSubmit} className="space-y-4">
                             {mode === 'signup' && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="name" className="text-[clamp(14px,1.5vw,16px)]">
+                                    <Label htmlFor="fullname" className="text-[clamp(14px,1.5vw,16px)]">
                                         Full Name
                                     </Label>
                                     <Input
-                                        id="name"
+                                        id="fullname"
                                         type="text"
                                         placeholder="John Doe"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
+                                        value={fullname}
+                                        onChange={(e) => setFullname(e.target.value)}
                                         required
                                         className="h-[48px] text-[clamp(14px,1.5vw,16px)] border-2 border-black focus:ring-2 focus:ring-black"
                                     />
@@ -131,15 +180,26 @@ export default function AuthPage() {
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
+                                    minLength={8}
                                     className="h-[48px] text-[clamp(14px,1.5vw,16px)] border-2 border-black focus:ring-2 focus:ring-black"
                                 />
+                                {mode === 'signup' && (
+                                    <p className="text-[clamp(12px,1.5vw,14px)] text-black/60">
+                                        Password must be at least 8 characters
+                                    </p>
+                                )}
                             </div>
 
                             <Button
                                 type="submit"
                                 className="w-full h-[52px] text-[clamp(16px,1.5vw,18px)] font-bold"
+                                disabled={isLoading}
                             >
-                                {mode === 'signin' ? 'Sign In' : 'Create Account'}
+                                {isLoading
+                                    ? 'Processing...'
+                                    : mode === 'signin'
+                                    ? 'Sign In'
+                                    : 'Create Account'}
                             </Button>
                         </form>
 

@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { SmoothScrollProvider } from '@/components/smooth-scroll-provider'
+import { ReactQueryProvider } from '@/providers/react-query-provider'
 
 export const metadata: Metadata = {
   title: 'Orchestor',
@@ -18,7 +19,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        <ReactQueryProvider>
+          <SmoothScrollProvider>{children}</SmoothScrollProvider>
+        </ReactQueryProvider>
       </body>
     </html>
   )
