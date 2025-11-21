@@ -8,10 +8,15 @@ import { TransparencySection } from '@/components/sections/transparency-section'
 import { UseCasesSection } from '@/components/sections/use-cases-section'
 import { CTASection } from '@/components/sections/cta-section'
 import { Footer } from '@/components/footer'
+import { ScrollIndicator } from '@/components/scroll-indicator'
+import { ScrollToTop } from '@/components/scroll-to-top'
 
 export default function Home() {
   return (
     <div className="bg-custom-green font-body min-h-screen overflow-x-hidden">
+      <ScrollIndicator />
+      <ScrollToTop />
+      
       {/* SECTION 1: HERO */}
       <section className="p-[clamp(20px,4vw,30px)]">
         <Navbar />
