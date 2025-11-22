@@ -15,6 +15,7 @@ import { CaptionEnhancementCard } from '@/components/ai/caption-enhancement-card
 import type { FlaggedItem } from '@/types/flagged-items'
 import type { ScheduleSuggestion, ScheduleItem } from '@/types/schedule-suggestion'
 import type { CaptionEnhancement } from '@/types/caption'
+import type { ScheduledPost } from '@/services/tasks'
 import { mockScheduleData, mockFlaggedItemsBasic, mockScheduleSuggestionsBasic } from '@/lib/mock-data'
 
 export default function SchedulePreviewPage() {
@@ -27,10 +28,35 @@ export default function SchedulePreviewPage() {
     const [currentEnhancementIndex, setCurrentEnhancementIndex] = useState(0)
     const [reviewedEnhancements, setReviewedEnhancements] = useState<Set<string>>(new Set())
 
-    // Simulate loading from upload flow
+    // Load scheduled posts from upload flow
     useEffect(() => {
-        // TODO: Check if coming from /upload route and load actual data
-        // For now, using mock data
+        const scheduledPostsData = sessionStorage.getItem('scheduledPosts')
+        if (scheduledPostsData) {
+            try {
+                const scheduledPosts: ScheduledPost[] = JSON.parse(scheduledPostsData)
+                
+                // Convert backend ScheduledPost[] to frontend ScheduleItem[]
+                const convertedItems: ScheduleItem[] = scheduledPosts.map((post, index) => ({
+                    id: index + 1,
+                    title: `${post.account} - ${post.platform}`,
+                    platform: post.platform,
+                    scheduledDate: new Date(post.scheduled_time).toISOString().split('T')[0],
+                    scheduledTime: new Date(post.scheduled_time).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit',
+                        hour12: false 
+                    }),
+                    status: post.status === 'SCHEDULED' ? 'scheduled' : 'draft',
+                    caption: post.caption,
+                    aiTips: [] // Backend doesn't provide AI tips in this response
+                }))
+                
+                setScheduleItems(convertedItems)
+            } catch (error) {
+                console.error('Failed to parse scheduled posts:', error)
+                // Fall back to mock data
+            }
+        }
     }, [])
 
     const handleEdit = (item: ScheduleItem) => {

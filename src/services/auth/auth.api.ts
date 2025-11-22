@@ -6,18 +6,16 @@ import type {
   User
 } from "./auth.types"
 
-const AUTH_ENDPOINT = "/api/auth"
-
 /**
  * Sign in API call
- * POST /api/auth/sign-in
+ * POST /auth/sign-in
  *
  * @param payload - Email and password
  * @returns User object (session cookie set automatically)
  */
 export const signIn = async (payload: SignInPayload): Promise<User> => {
   const { data } = await apiClient.post<User>(
-    `${AUTH_ENDPOINT}/sign-in`,
+    '/auth/sign-in',
     payload
   )
   return data
@@ -25,14 +23,14 @@ export const signIn = async (payload: SignInPayload): Promise<User> => {
 
 /**
  * Sign up API call
- * POST /api/auth/sign-up
+ * POST /auth/sign-up
  *
  * @param payload - Email, password, and fullname
  * @returns User object (session cookie set automatically)
  */
 export const signUp = async (payload: SignUpPayload): Promise<User> => {
   const { data } = await apiClient.post<User>(
-    `${AUTH_ENDPOINT}/sign-up`,
+    '/auth/sign-up',
     payload
   )
   return data
@@ -40,7 +38,7 @@ export const signUp = async (payload: SignUpPayload): Promise<User> => {
 
 /**
  * OAuth sign in API call (Google/Apple)
- * POST /api/auth/sign-in-with-provider
+ * POST /auth/sign-in-with-provider
  *
  * @param payload - Provider, token, and optional access token
  * @returns User object (session cookie set automatically)
@@ -49,7 +47,7 @@ export const signInWithProvider = async (
   payload: OAuthSignInPayload
 ): Promise<User> => {
   const { data } = await apiClient.post<User>(
-    `${AUTH_ENDPOINT}/sign-in-with-provider`,
+    '/auth/sign-in-with-provider',
     payload
   )
   return data
@@ -57,13 +55,13 @@ export const signInWithProvider = async (
 
 /**
  * Get current authenticated user
- * NOTE: Not implemented - user data is cached from sign-in/sign-up
- * No additional API call needed since we use cookie-based auth
+ * GET /user/me
  *
- * @returns Cached user data or throws error
+ * @returns Current user data from backend
  */
 export const getCurrentUser = async (): Promise<User> => {
-  throw new Error("getCurrentUser should use cached data from sign-in/sign-up")
+  const { data } = await apiClient.get<User>('/user/me')
+  return data
 }
 
 // Backwards compatibility aliases

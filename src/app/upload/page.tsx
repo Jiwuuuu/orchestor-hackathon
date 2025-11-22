@@ -8,6 +8,8 @@ import { FileUploadZone } from '@/components/upload/file-upload-zone'
 import { UploadSuccess } from '@/components/upload/upload-success'
 import { UploadInfoCards } from '@/components/upload/upload-info-cards'
 import { ProcessingLoader } from '@/components/upload/processing-loader'
+import { previewTasks, parseCSVToTasks, parseJSONToTasks } from '@/services/tasks'
+import type { TaskInput, TaskPreviewResponse } from '@/services/tasks'
 
 interface UploadedFile {
     name: string
@@ -62,18 +64,41 @@ export default function UploadPage() {
                     data: content
                 })
 
-                // Simulate processing
-                await new Promise(resolve => setTimeout(resolve, 1500))
+                // Parse file content to task array
+                let tasks: TaskInput[]
+                try {
+                    if (file.name.endsWith('.json')) {
+                        tasks = parseJSONToTasks(content)
+                    } else if (file.name.endsWith('.csv')) {
+                        tasks = parseCSVToTasks(content)
+                    } else {
+                        throw new Error('Unsupported file format')
+                    }
+                } catch (parseError) {
+                    setError('Failed to parse file. Please check the format matches Asana export.')
+                    setIsProcessing(false)
+                    return
+                }
 
-                // TODO: Backend integration - Send file to API for processing
-                // const response = await fetch('/api/upload/tasks', {
-                //     method: 'POST',
-                //     headers: { 'Content-Type': 'application/json' },
-                //     body: JSON.stringify({ filename: file.name, content })
-                // })
-
-                setSuccess(true)
-                setIsProcessing(false)
+                // Call backend API for task preview
+                try {
+                    const response: TaskPreviewResponse = await previewTasks(tasks)
+                    
+                    // Backend returns array of scheduled posts directly
+                    // Store response data for schedule preview page
+                    sessionStorage.setItem('scheduledPosts', JSON.stringify(response.data))
+                    sessionStorage.setItem('uploadMessage', response.message)
+                    
+                    setSuccess(true)
+                } catch (apiError: any) {
+                    const errorMessage = apiError?.response?.data?.error?.message 
+                        || apiError?.message 
+                        || 'Failed to process tasks. Please try again.'
+                    setError(errorMessage)
+                    console.error('API Error:', apiError)
+                } finally {
+                    setIsProcessing(false)
+                }
             }
 
             reader.onerror = () => {
