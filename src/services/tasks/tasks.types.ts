@@ -10,6 +10,7 @@ export interface TaskInput {
   taskId: string;
   name: string;
   account: string;
+  platform: string; // Single platform: "instagram", "facebook", etc. (takes first from CSV)
   postType: string;
   status: string;
   createdAt: string;
@@ -17,7 +18,7 @@ export interface TaskInput {
   tags: string[];
   caption: string;
   videoUrl: string;
-  thumbnailUrl: string | null;
+  thumbnailUrl: null;
   assignee: string;
   assigneeEmail: string;
   project: string;
@@ -74,7 +75,7 @@ export interface PlatformCaptionResult {
 /**
  * Schedule suggestion for a platform
  */
-export interface ScheduleSuggestion {
+export interface PlatformScheduleSuggestion {
   platform: string;
   suggestedTime: string;
   conflict: boolean;
@@ -88,7 +89,7 @@ export interface ProcessedTask {
   task: TaskInput;
   validation: TaskValidation;
   captions: PlatformCaptionResult[];
-  schedule: ScheduleSuggestion[];
+  schedule: PlatformScheduleSuggestion[];
   ready: boolean;
 }
 
@@ -104,11 +105,14 @@ export interface TaskPreviewSummary {
 
 /**
  * ACTUAL backend response (updated Nov 23, 2025)
- * Backend returns scheduled posts directly, not preview with validation
+ * Backend returns preview with validation, captions, and schedule suggestions
  */
 export interface TaskPreviewResponse {
   status: number;
-  data: ScheduledPost[];
+  data: {
+    tasks: ProcessedTask[];
+    summary: TaskPreviewSummary;
+  };
   message: string;
 }
 
@@ -120,6 +124,44 @@ export interface TaskPreviewRequest {
 }
 
 /**
+ * Post to be scheduled (API request format)
+ * Matches backend SchedulePostDto schema
+ */
+export interface SchedulePostInput {
+  taskId: string;
+  account: string | null;
+  platform: string;
+  caption: string;
+  assetUrl: string | null;
+  tags: string[];
+  scheduledTime: string; // ISO 8601 format (datetime)
+  project: string | null;
+  section: string | null;
+}
+
+/**
+ * Task schedule request payload
+ */
+export interface TaskScheduleRequest {
+  posts: SchedulePostInput[];
+}
+
+/**
+ * Task schedule response
+ */
+export interface TaskScheduleResponse {
+  status: number;
+  data: {
+    scheduled: ScheduledPost[];
+    failed: Array<{
+      taskId: string;
+      reason: string;
+    }>;
+  };
+  message: string;
+}
+
+/**
  * DEPRECATED - Backend doesn't return this format
  * Keeping for reference only
  */
@@ -127,7 +169,7 @@ export interface ProcessedTaskOld {
   task: TaskInput;
   validation: TaskValidation;
   captions: PlatformCaptionResult[];
-  schedule: ScheduleSuggestion[];
+  schedule: PlatformScheduleSuggestion[];
   ready: boolean;
 }
 

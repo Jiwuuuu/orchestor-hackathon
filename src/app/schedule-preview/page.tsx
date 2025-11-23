@@ -15,7 +15,8 @@ import { CaptionEnhancementCard } from '@/components/ai/caption-enhancement-card
 import type { FlaggedItem } from '@/types/flagged-items'
 import type { ScheduleSuggestion, ScheduleItem } from '@/types/schedule-suggestion'
 import type { CaptionEnhancement } from '@/types/caption'
-import type { ScheduledPost } from '@/services/tasks'
+import type { ProcessedTask, TaskPreviewSummary } from '@/services/tasks'
+import { scheduleTasks } from '@/services/tasks'
 import { mockScheduleData, mockFlaggedItemsBasic, mockScheduleSuggestionsBasic } from '@/lib/mock-data'
 
 export default function SchedulePreviewPage() {
@@ -27,33 +28,157 @@ export default function SchedulePreviewPage() {
     const [showEnhancementsDialog, setShowEnhancementsDialog] = useState(false)
     const [currentEnhancementIndex, setCurrentEnhancementIndex] = useState(0)
     const [reviewedEnhancements, setReviewedEnhancements] = useState<Set<string>>(new Set())
+    const [previewTasks, setPreviewTasks] = useState<ProcessedTask[]>([])
+    const [isPublishing, setIsPublishing] = useState(false)
 
-    // Load scheduled posts from upload flow
+    // Load preview data from upload flow
     useEffect(() => {
-        const scheduledPostsData = sessionStorage.getItem('scheduledPosts')
-        if (scheduledPostsData) {
+        const previewData = sessionStorage.getItem('scheduledPosts')
+        if (previewData) {
             try {
-                const scheduledPosts: ScheduledPost[] = JSON.parse(scheduledPostsData)
-                
-                // Convert backend ScheduledPost[] to frontend ScheduleItem[]
-                const convertedItems: ScheduleItem[] = scheduledPosts.map((post, index) => ({
-                    id: index + 1,
-                    title: `${post.account} - ${post.platform}`,
-                    platform: post.platform,
-                    scheduledDate: new Date(post.scheduled_time).toISOString().split('T')[0],
-                    scheduledTime: new Date(post.scheduled_time).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit',
-                        hour12: false 
-                    }),
-                    status: post.status === 'SCHEDULED' ? 'scheduled' : 'draft',
-                    caption: post.caption,
-                    aiTips: [] // Backend doesn't provide AI tips in this response
-                }))
-                
+                const { tasks, summary }: { tasks: ProcessedTask[], summary: TaskPreviewSummary } = JSON.parse(previewData)
+
+                console.log('Loaded preview data:', { tasks, summary })
+
+                // Store the processed tasks for scheduling
+                setPreviewTasks(tasks)
+
+                // Convert ProcessedTask[] to FlaggedItem[] for issues
+                const flagged: FlaggedItem[] = tasks
+                    .filter(processedTask => !processedTask.ready || processedTask.validation.issues.some(i => i.severity === 'error' || i.severity === 'warning'))
+                    .map((processedTask) => {
+                        const criticalIssue = processedTask.validation.issues.find(i => i.severity === 'error')
+                        const warningIssue = processedTask.validation.issues.find(i => i.severity === 'warning')
+                        const mainIssue = criticalIssue || warningIssue || processedTask.validation.issues[0]
+
+                        // Map issue codes to types
+                        const issueTypeMap: Record<string, FlaggedItem['issue']['type']> = {
+                            'MISSING_ASSET': 'missing_asset',
+                            'MISSING_CAPTION': 'caption_issue',
+                            'MISSING_THUMBNAIL': 'missing_asset',
+                            'MISSING_HASHTAGS': 'caption_issue',
+                        }
+
+                        return {
+                            id: processedTask.task.taskId,
+                            taskTitle: processedTask.task.name,
+                            platform: processedTask.schedule[0]?.platform || 'instagram',
+                            issue: {
+                                type: issueTypeMap[mainIssue.code] || 'caption_issue',
+                                severity: mainIssue.severity === 'error' ? 'critical' : 'warning',
+                                description: mainIssue.message
+                            },
+                            aiAttempt: {
+                                tried: processedTask.captions.length > 0 ? 'Caption optimization' : 'Asset validation',
+                                reason: processedTask.validation.issues.length > 0 ? 'Unable to fully resolve all issues' : 'Task incomplete'
+                            },
+                            suggestion: {
+                                text: `${mainIssue.message}. Please review and update manually.`,
+                                confidence: processedTask.validation.score * 100,
+                                action: processedTask.captions.length > 0 ? 'Update caption' : 'Add missing assets'
+                            },
+                            actions: ['accept', 'edit', 'skip']
+                        }
+                    })
+
+                setFlaggedItems(flagged)
+
+                // Convert ProcessedTask[] to ScheduleSuggestion[] for schedule optimizations
+                const scheduleOptimizations: ScheduleSuggestion[] = tasks
+                    .filter(pt => pt.schedule.length > 0 && pt.schedule.some(s => s.conflict))
+                    .map((pt, index) => {
+                        const conflictSchedule = pt.schedule.find(s => s.conflict)
+                        return {
+                            id: `sched-${index}`,
+                            type: 'conflict' as const,
+                            icon: '⚠️',
+                            title: 'Schedule Conflict Detected',
+                            description: conflictSchedule?.reason || 'Schedule conflict detected',
+                            impact: 'May reduce engagement',
+                            affectedPosts: [pt.task.taskId],
+                            action: {
+                                label: 'Reschedule',
+                                changes: pt.schedule.map(s => ({
+                                    postId: pt.task.taskId,
+                                    field: 'time' as const,
+                                    from: pt.task.dueDate,
+                                    to: s.suggestedTime
+                                }))
+                            }
+                        }
+                    })
+
+                setScheduleSuggestions(scheduleOptimizations)
+
+                // Convert ProcessedTask[] to ScheduleItem[] for the table
+                const convertedItems: ScheduleItem[] = tasks.map((processedTask, index) => {
+                    const primarySchedule = processedTask.schedule[0]
+
+                    // Build caption enhancement structure matching CaptionEnhancement type
+                    const captionEnhancement: CaptionEnhancement | undefined = processedTask.captions.length > 0 ? {
+                        taskId: processedTask.task.taskId,
+                        taskTitle: processedTask.task.name,
+                        original: {
+                            text: processedTask.task.caption,
+                            characterCount: processedTask.task.caption.length
+                        },
+                        enhanced: {
+                            instagram: {
+                                text: processedTask.captions.find(c => c.platform === 'instagram')?.optimized || processedTask.task.caption,
+                                characterCount: (processedTask.captions.find(c => c.platform === 'instagram')?.optimized || processedTask.task.caption).length,
+                                characterLimit: 2200,
+                                status: 'optimal' as const,
+                                hashtags: processedTask.captions.find(c => c.platform === 'instagram')?.hashtags || []
+                            },
+                            facebook: {
+                                text: processedTask.captions.find(c => c.platform === 'facebook')?.optimized || processedTask.task.caption,
+                                characterCount: (processedTask.captions.find(c => c.platform === 'facebook')?.optimized || processedTask.task.caption).length,
+                                characterLimit: 63206,
+                                status: 'optimal' as const,
+                                hashtags: processedTask.captions.find(c => c.platform === 'facebook')?.hashtags || []
+                            },
+                            linkedin: {
+                                text: processedTask.captions.find(c => c.platform === 'linkedin')?.optimized || processedTask.task.caption,
+                                characterCount: (processedTask.captions.find(c => c.platform === 'linkedin')?.optimized || processedTask.task.caption).length,
+                                characterLimit: 3000,
+                                status: 'optimal' as const,
+                                hashtags: processedTask.captions.find(c => c.platform === 'linkedin')?.hashtags || []
+                            },
+                            twitter: {
+                                text: processedTask.captions.find(c => c.platform === 'twitter')?.optimized || processedTask.task.caption,
+                                characterCount: (processedTask.captions.find(c => c.platform === 'twitter')?.optimized || processedTask.task.caption).length,
+                                characterLimit: 280,
+                                status: 'optimal' as const,
+                                hashtags: processedTask.captions.find(c => c.platform === 'twitter')?.hashtags || []
+                            }
+                        },
+                        improvements: [
+                            `Added ${processedTask.captions[0]?.hashtags.length || 0} relevant hashtags`,
+                            'Optimized for platform engagement',
+                            'Enhanced readability and call-to-action'
+                        ],
+                        suggestedHashtags: (processedTask.captions[0]?.hashtags || []).map(tag => ({
+                            tag,
+                            performance: 'high_engagement' as const
+                        }))
+                    } : undefined
+
+                    return {
+                        id: index + 1,
+                        title: processedTask.task.name,
+                        platform: primarySchedule?.platform || 'instagram',
+                        scheduledDate: processedTask.task.dueDate,
+                        scheduledTime: primarySchedule?.suggestedTime || '12:00',
+                        status: processedTask.ready ? 'scheduled' : 'draft',
+                        caption: processedTask.task.caption,
+                        aiTips: processedTask.validation.issues.map(issue => issue.message),
+                        captionEnhancement
+                    }
+                })
+
                 setScheduleItems(convertedItems)
             } catch (error) {
-                console.error('Failed to parse scheduled posts:', error)
+                console.error('Failed to parse preview data:', error)
                 // Fall back to mock data
             }
         }
@@ -148,6 +273,64 @@ export default function SchedulePreviewPage() {
         console.log('Keeping original for:', taskId)
         // Mark as reviewed and move to next
         moveToNextEnhancement(taskId)
+    }
+
+    const handlePublishSchedule = async () => {
+        if (previewTasks.length === 0) {
+            console.warn('No tasks to schedule')
+            return
+        }
+
+        // Filter only ready tasks (tasks that have passed validation)
+        const readyTasks = previewTasks.filter(task => task.ready)
+
+        if (readyTasks.length === 0) {
+            console.warn('No tasks are ready to schedule')
+            return
+        }
+
+        const notReadyCount = previewTasks.length - readyTasks.length
+        if (notReadyCount > 0) {
+            console.warn(`${notReadyCount} task(s) have validation issues and will be skipped. Ready to schedule: ${readyTasks.length} task(s)`)
+        }
+
+        setIsPublishing(true)
+        try {
+            console.log('Publishing schedule with ready tasks:', readyTasks)
+            const response = await scheduleTasks(readyTasks)
+
+            console.log('Schedule response:', response)
+
+            // Check if response has the expected structure
+            if (response && response.data) {
+                if (response.data.failed && response.data.failed.length > 0) {
+                    const failedCount = response.data.failed.length
+                    const successCount = response.data.scheduled?.length || 0
+                    console.warn(`Scheduled ${successCount} tasks. ${failedCount} tasks failed:`, response.data.failed)
+                } else {
+                    console.log(`Successfully scheduled ${response.data.scheduled?.length || 0} tasks!`)
+                }
+
+                // Clear session storage and redirect to dashboard
+                sessionStorage.removeItem('scheduledPosts')
+                window.location.href = '/dashboard'
+            } else {
+                console.error('Invalid response structure:', response)
+            }
+        } catch (error: any) {
+            console.error('Failed to publish schedule:', error)
+            console.error('Error response:', error?.response)
+            console.error('Error data:', error?.response?.data)
+
+            const errorMessage = error?.response?.data?.error?.message
+                || error?.response?.data?.message
+                || error?.message
+                || 'Failed to publish schedule. Please try again.'
+
+            console.error('Error details:', errorMessage)
+        } finally {
+            setIsPublishing(false)
+        }
     }
 
     const moveToNextEnhancement = (completedTaskId: string) => {
@@ -297,12 +480,14 @@ export default function SchedulePreviewPage() {
 
                 {/* Action Buttons */}
                 <div className="flex gap-4 mt-8">
-                    <Link href="/dashboard" className="flex-1">
-                        <Button className="flex items-center justify-center gap-[clamp(8px,1vw,10px)] text-lg w-full bg-black text-custom-green hover:bg-custom-dark font-bold border-2 border-black">
-                            <FileCheck className="w-[clamp(18px,2.2vw,22px)] h-[clamp(18px,2.2vw,22px)]" />
-                            Publish Schedule
-                        </Button>
-                    </Link>
+                    <Button
+                        onClick={handlePublishSchedule}
+                        disabled={isPublishing || previewTasks.length === 0}
+                        className="flex-1 flex items-center justify-center gap-[clamp(8px,1vw,10px)] text-lg bg-black text-custom-green hover:bg-custom-dark font-bold border-2 border-black disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        <FileCheck className="w-[clamp(18px,2.2vw,22px)] h-[clamp(18px,2.2vw,22px)]" />
+                        {isPublishing ? 'Publishing...' : 'Publish Schedule'}
+                    </Button>
                     <Link href="/upload">
                         <Button variant="outline" className="text-lg">Upload New File</Button>
                     </Link>
