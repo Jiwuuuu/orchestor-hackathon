@@ -5,7 +5,7 @@ import type {
   RecentPostsResponse,
 } from "./dashboard.types";
 
-const DASHBOARD_ENDPOINT = "/api/dashboard";
+const DASHBOARD_ENDPOINT = "/dashboard";
 
 /**
  * Fetch dashboard summary

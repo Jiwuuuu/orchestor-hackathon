@@ -9,7 +9,7 @@ import type {
   ProcessedTask,
 } from "./tasks.types";
 
-const TASKS_ENDPOINT = "/api/tasks";
+const TASKS_ENDPOINT = "/tasks";
 
 /**
  * Submit tasks for AI preview and processing

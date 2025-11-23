@@ -57,9 +57,9 @@ export const createApiClient = (
           sessionStorage.removeItem('access_token')
         }
 
-        // Don't redirect for /api/user/me - let CurrentUserProvider handle it
+        // Don't redirect for /user/me - let CurrentUserProvider handle it
         // This prevents double redirects and infinite loops
-        const isUserMeEndpoint = error.config?.url?.includes('/api/user/me')
+        const isUserMeEndpoint = error.config?.url?.includes('/user/me')
 
         if (!isUserMeEndpoint && typeof window !== "undefined") {
           window.location.href = "/auth"

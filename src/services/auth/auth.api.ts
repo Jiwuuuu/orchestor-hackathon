@@ -15,7 +15,7 @@ import type {
  */
 export const signIn = async (payload: SignInPayload): Promise<User> => {
   const response = await apiClient.post<any>(
-    '/api/auth/sign-in',
+    '/auth/sign-in',
     payload
   )
 
@@ -44,7 +44,7 @@ export const signIn = async (payload: SignInPayload): Promise<User> => {
  */
 export const signUp = async (payload: SignUpPayload): Promise<User> => {
   const { data } = await apiClient.post<User>(
-    '/api/auth/sign-up',
+    '/auth/sign-up',
     payload
   )
   return data
@@ -61,7 +61,7 @@ export const signInWithProvider = async (
   payload: OAuthSignInPayload
 ): Promise<User> => {
   const response = await apiClient.post<any>(
-    '/api/auth/sign-in-with-provider',
+    '/auth/sign-in-with-provider',
     payload
   )
 
@@ -88,7 +88,7 @@ export const signInWithProvider = async (
  * @returns Current user data from backend
  */
 export const getCurrentUser = async (): Promise<User> => {
-  const { data } = await apiClient.get<User>('/api/user/me')
+  const { data } = await apiClient.get<User>('/user/me')
   return data
 }
 

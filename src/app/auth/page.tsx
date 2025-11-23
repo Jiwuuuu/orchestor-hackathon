@@ -18,6 +18,7 @@ export default function AuthPage() {
     const [password, setPassword] = useState('')
     const [fullname, setFullname] = useState('')
     const [error, setError] = useState('')
+    const [successMessage, setSuccessMessage] = useState('')
     const [isChecking, setIsChecking] = useState(true)
     const router = useRouter()
 
@@ -49,6 +50,7 @@ export default function AuthPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setError('')
+        setSuccessMessage('')
 
         try {
             if (mode === 'signup') {
@@ -58,17 +60,23 @@ export default function AuthPage() {
                     password,
                     fullname
                 })
+
+                // Switch to sign-in mode and show success message
+                setSuccessMessage('Account created successfully! Please check your email to confirm your account before signing in.')
+                setMode('signin')
+                setPassword('') // Clear password for security
+                setFullname('') // Clear fullname
             } else {
                 // Sign in with email and password
                 await signInMutation.mutateAsync({
                     email,
                     password
                 })
-            }
 
-            // Session cookie is set automatically by backend
-            // Navigate to dashboard
-            router.push('/dashboard')
+                // Session cookie is set automatically by backend
+                // Navigate to dashboard
+                router.push('/dashboard')
+            }
         } catch (unknownError) {
             // Handle errors with centralized error resolver
             setError(resolveErrorMessage(unknownError))
@@ -141,6 +149,15 @@ export default function AuthPage() {
                     </CardHeader>
 
                     <CardContent>
+                        {/* Success Message Display */}
+                        {successMessage && (
+                            <div className="mb-4 p-4 border-2 border-green-500 bg-green-50 rounded-lg">
+                                <p className="text-[clamp(14px,1.5vw,16px)] text-green-700 font-medium">
+                                    {successMessage}
+                                </p>
+                            </div>
+                        )}
+
                         {/* Error Display */}
                         {error && (
                             <div className="mb-4 p-4 border-2 border-red-500 bg-red-50 rounded-lg">
@@ -272,7 +289,11 @@ export default function AuthPage() {
                     <CardFooter className="flex flex-col space-y-4">
                         <button
                             type="button"
-                            onClick={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+                            onClick={() => {
+                                setMode(mode === 'signin' ? 'signup' : 'signin')
+                                setError('')
+                                setSuccessMessage('')
+                            }}
                             className="text-[clamp(14px,1.5vw,16px)] hover:underline underline-offset-4"
                         >
                             {mode === 'signin'
