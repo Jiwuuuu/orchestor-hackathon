@@ -67,6 +67,7 @@ export default function UploadPage() {
                 // Parse file content to task array
                 let tasks: TaskInput[]
                 try {
+                    console.log('Starting to parse file:', file.name)
                     if (file.name.endsWith('.json')) {
                         tasks = parseJSONToTasks(content)
                     } else if (file.name.endsWith('.csv')) {
@@ -74,7 +75,10 @@ export default function UploadPage() {
                     } else {
                         throw new Error('Unsupported file format')
                     }
+                    console.log('Parsed tasks:', tasks.length, 'tasks')
+                    console.log('First task sample:', tasks[0])
                 } catch (parseError) {
+                    console.error('Parse error:', parseError)
                     setError('Failed to parse file. Please check the format matches Asana export.')
                     setIsProcessing(false)
                     return
@@ -82,21 +86,25 @@ export default function UploadPage() {
 
                 // Call backend API for task preview
                 try {
+                    console.log('Calling API with tasks:', tasks)
                     const response: TaskPreviewResponse = await previewTasks(tasks)
-                    
+                    console.log('API Response:', response)
+
                     // Backend returns array of scheduled posts directly
                     // Store response data for schedule preview page
                     sessionStorage.setItem('scheduledPosts', JSON.stringify(response.data))
                     sessionStorage.setItem('uploadMessage', response.message)
-                    
+
+                    // Only set success after API call completes
+                    setIsProcessing(false)
                     setSuccess(true)
                 } catch (apiError: any) {
-                    const errorMessage = apiError?.response?.data?.error?.message 
-                        || apiError?.message 
+                    const errorMessage = apiError?.response?.data?.error?.message
+                        || apiError?.message
                         || 'Failed to process tasks. Please try again.'
                     setError(errorMessage)
                     console.error('API Error:', apiError)
-                } finally {
+                    console.error('Full error:', apiError?.response)
                     setIsProcessing(false)
                 }
             }

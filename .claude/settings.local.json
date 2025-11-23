@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(if not exist \"src\\services\\tasks\\index.ts\" echo.)",
+      "Bash(\"src\\services\\tasks\\index.ts\")"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

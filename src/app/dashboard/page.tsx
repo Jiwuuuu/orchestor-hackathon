@@ -19,7 +19,19 @@ export default function DashboardPage() {
     })
 
     // Get the display name (prefer fullname, fallback to email username, finally fallback to "User")
-    const displayName = user?.fullname || user?.email?.split('@')[0] || 'User'
+    const getDisplayName = () => {
+        if (user?.fullname) return user.fullname
+        if (user?.email) {
+            const username = user.email.split('@')[0]
+            return username
+        }
+        return 'User'
+    }
+
+    const displayName = getDisplayName()
+
+    console.log('Dashboard user:', user)
+    console.log('Display name:', displayName)
 
     return (
         <div className="min-h-screen bg-custom-green">

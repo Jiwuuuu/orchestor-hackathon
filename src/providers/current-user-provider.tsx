@@ -2,8 +2,7 @@
 
 import { createContext, useContext, useMemo, useEffect, type PropsWithChildren } from "react"
 import { useRouter } from "next/navigation"
-import { useQueryClient } from "@tanstack/react-query"
-import { authKeys } from "@/services/auth"
+import { useCurrentUserQuery } from "@/services/auth"
 import type { User } from "@/services/auth"
 
 /**
@@ -11,6 +10,7 @@ import type { User } from "@/services/auth"
  */
 type CurrentUserContextValue = {
   user: User | null
+  isLoading: boolean
 }
 
 const CurrentUserContext = createContext<CurrentUserContextValue | null>(null)
@@ -19,13 +19,14 @@ const CurrentUserContext = createContext<CurrentUserContextValue | null>(null)
  * Current User Provider
  *
  * Provides authenticated user data throughout the application.
- * Uses cookie-based authentication - user data is cached from sign-in/sign-up.
- * Protects routes by redirecting to /auth if no user is cached.
+ * Uses cookie-based authentication - fetches current user from /api/user/me.
+ * Protects routes by redirecting to /auth if user is not authenticated.
  *
  * Features:
- * - Uses cached user data from React Query
- * - User data set during sign-in/sign-up mutations
- * - Redirects to /auth if no cached user found
+ * - Fetches current user from server on mount
+ * - Validates session cookie on every protected route access
+ * - Redirects to /auth if no valid session
+ * - Handles loading and error states
  *
  * Usage:
  * Wrap protected routes with this provider:
@@ -37,37 +38,39 @@ const CurrentUserContext = createContext<CurrentUserContextValue | null>(null)
  *
  * Then consume in components:
  * ```tsx
- * const { user } = useCurrentUser()
+ * const { user, isLoading } = useCurrentUser()
  * ```
  */
 export function CurrentUserProvider({ children }: PropsWithChildren) {
   const router = useRouter()
-  const queryClient = useQueryClient()
 
-  // Get cached user data (set by sign-in/sign-up mutations)
-  const user = queryClient.getQueryData<User>(authKeys.me()) ?? null
+  // Fetch current user from server (validates session cookie)
+  const { data: user, isLoading, error } = useCurrentUserQuery()
 
-  // Redirect to auth if no user in cache
+  // Redirect to auth if authentication fails
   useEffect(() => {
-    if (!user) {
+    if (!isLoading && (error || !user)) {
       router.replace("/auth")
     }
-  }, [user, router])
+  }, [user, isLoading, error, router])
 
   const value = useMemo<CurrentUserContextValue>(
     () => ({
-      user,
+      user: user ?? null,
+      isLoading,
     }),
-    [user]
+    [user, isLoading]
   )
 
-  // Show loading or nothing while redirecting
-  if (!user) {
+  // Show loading while fetching user or redirecting
+  if (isLoading || !user) {
     return (
       <div className="min-h-screen bg-custom-green flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-black border-r-transparent"></div>
-          <p className="mt-4 text-[clamp(14px,1.5vw,16px)] text-black/60">Redirecting...</p>
+          <p className="mt-4 text-[clamp(14px,1.5vw,16px)] text-black/60">
+            {isLoading ? "Loading..." : "Redirecting..."}
+          </p>
         </div>
       </div>
     )

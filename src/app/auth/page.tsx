@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useQueryClient } from '@tanstack/react-query'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { useSignInMutation, useSignUpMutation, authKeys, type User } from '@/services/auth'
+import { useSignInMutation, useSignUpMutation, useOAuthSignInMutation } from '@/services/auth'
 import { resolveErrorMessage } from '@/lib/helper/error-helper'
+import { supabase } from '@/lib/supabase'
 
 type AuthMode = 'signin' | 'signup'
 
@@ -18,19 +18,33 @@ export default function AuthPage() {
     const [password, setPassword] = useState('')
     const [fullname, setFullname] = useState('')
     const [error, setError] = useState('')
+    const [isChecking, setIsChecking] = useState(true)
     const router = useRouter()
-    const queryClient = useQueryClient()
 
     const signInMutation = useSignInMutation()
     const signUpMutation = useSignUpMutation()
+    const oauthMutation = useOAuthSignInMutation()
 
-    // Redirect to dashboard if user is already logged in
+    // Check if user is already authenticated or came from logout
     useEffect(() => {
-        const user = queryClient.getQueryData<User>(authKeys.me())
-        if (user) {
-            router.replace('/dashboard')
+        const loggingOut = sessionStorage.getItem('isLoggingOut') === 'true'
+        const accessToken = sessionStorage.getItem('access_token')
+
+        // Clear the flag after checking
+        if (loggingOut) {
+            sessionStorage.removeItem('isLoggingOut')
+            setIsChecking(false)
+            return
         }
-    }, [queryClient, router])
+
+        // Redirect to dashboard if already authenticated
+        if (accessToken && !loggingOut) {
+            router.replace('/dashboard')
+            // Don't set isChecking to false - keep showing loading during redirect
+        } else {
+            setIsChecking(false)
+        }
+    }, [router])
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -65,7 +79,35 @@ export default function AuthPage() {
         router.push('/dashboard')
     }
 
-    const isLoading = signInMutation.isPending || signUpMutation.isPending
+    const handleGoogleSignIn = async () => {
+        setError('')
+
+        try {
+            // Start OAuth flow with Supabase
+            const { data, error: supabaseError } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: {
+                    redirectTo: `${window.location.origin}/auth/callback`,
+                }
+            })
+
+            if (supabaseError) {
+                throw supabaseError
+            }
+
+            // Supabase will redirect to Google, then back to /auth/callback
+            // The callback page will handle sending the token to our backend
+        } catch (unknownError) {
+            setError(resolveErrorMessage(unknownError))
+        }
+    }
+
+    const isLoading = signInMutation.isPending || signUpMutation.isPending || oauthMutation.isPending
+
+    // Show nothing while checking auth to prevent flash
+    if (isChecking) {
+        return null
+    }
 
     return (
         <div className="min-h-screen bg-custom-green flex items-center justify-center p-[clamp(20px,4vw,40px)]">
@@ -113,7 +155,8 @@ export default function AuthPage() {
                             type="button"
                             variant="outline"
                             className="w-full h-[52px] text-[clamp(16px,1.5vw,18px)] font-medium mb-6"
-                            disabled
+                            onClick={handleGoogleSignIn}
+                            disabled={isLoading}
                         >
                             <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
                                 <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
