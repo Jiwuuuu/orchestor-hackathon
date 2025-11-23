@@ -18,7 +18,7 @@ export interface TaskInput {
   tags: string[];
   caption: string;
   videoUrl: string;
-  thumbnailUrl: null;
+  thumbnailUrl: string | null;
   assignee: string;
   assigneeEmail: string;
   project: string;
