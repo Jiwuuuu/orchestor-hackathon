@@ -1,6 +1,6 @@
 # Orchestor Frontend
 
-![Orchestor Logo](public/assets/orchestor-logo.png)
+![Orchestor Logo](public/orchestor-logo.png)
 
 A Next.js application for social media content orchestration, built by AgentBunnies for the IBM watsonx Orchestrate Agentic AI Hackathon 2025.
 
