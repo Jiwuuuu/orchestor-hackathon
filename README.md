@@ -1,9 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Orchestor Frontend
+
+A Next.js application for social media content orchestration, built by AgentBunnies for the IBM watsonx Orchestrate Agentic AI Hackathon 2025.
+
+## Tech Stack
+
+### Core Framework & Runtime
+- **Next.js** 16.0.3 (React framework with App Router)
+- **React** 19.2.0 (UI library)
+- **TypeScript** 5.x (Type safety)
+
+### Styling & UI
+- **Tailwind CSS** 4.x (Utility-first styling)
+- **shadcn/ui** (Component library)
+- **Radix UI** (Headless UI primitives)
+- **Lucide React** 0.554.0 (Icons)
+
+### Animation & Interactions
+- **Framer Motion** 12.23.24 (Animations)
+- **Lenis** 1.3.15 (Smooth scrolling)
+
+### State Management & Data Fetching
+- **TanStack Query** 5.90.10 (Server state management)
+- **TanStack Table** 8.21.3 (Data tables)
+- **Axios** 1.13.2 (HTTP client)
+
+### Backend & Authentication
+- **Supabase** 2.84.0 (Authentication & database)
+- Backend API via [Orchestor Backend](https://github.com/TraFost/orchestor-be)
+
+### Data Processing
+- **PapaParse** 5.5.3 (CSV parsing)
+
+## Features
+
+- User authentication via Supabase
+- AI-powered content scheduling and optimization
+- Multi-platform post management
+- Asset verification and validation
+- Caption enhancement with AI
+- Processing pipeline visualization
+- Schedule optimization recommendations
+- Repost analytics and recommendations
+- Interactive dashboard with analytics
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
 
+- Node.js (v18 or higher)
+- npm, yarn, pnpm, or bun
+
+### Installation
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Jiwuuuu/orchestor-hackathon.git
+cd orchestor-hackathon
+```
+
+2. Install dependencies:
+```bash
+npm install
+# or
+yarn install
+# or
+pnpm install
+# or
+bun install
+```
+
+3. Set up environment variables:
+   - Copy `.env.example` to `.env.local` (if available)
+   - Configure your Supabase URL and keys:
+     - `NEXT_PUBLIC_SUPABASE_URL`
+     - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+   - Configure backend API URL:
+     - `NEXT_PUBLIC_API_URL`
+
+4. Run the development server:
 ```bash
 npm run dev
 # or
@@ -14,23 +88,55 @@ pnpm dev
 bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/                    # Next.js App Router pages
+│   ├── auth/              # Authentication pages
+│   ├── dashboard/         # Dashboard pages
+│   ├── demo/              # Demo pages
+│   ├── repost/            # Repost analytics
+│   ├── schedule-preview/  # Schedule management
+│   └── upload/            # Upload functionality
+├── components/            # React components
+│   ├── ai/               # AI-powered components
+│   ├── dashboard/        # Dashboard components
+│   ├── repost/           # Repost components
+│   ├── schedule-preview/ # Schedule components
+│   ├── sections/         # Landing page sections
+│   ├── ui/               # shadcn/ui components
+│   └── upload/           # Upload components
+├── lib/                  # Utilities and configurations
+│   ├── helper/           # Helper functions
+│   ├── hooks/            # Custom React hooks
+│   └── mock-data/        # Mock data for development
+├── providers/            # React context providers
+├── services/             # API service layer
+└── types/                # TypeScript type definitions
+```
 
-## Learn More
+## Related Projects
 
-To learn more about Next.js, take a look at the following resources:
+- **Backend Repository**: [Orchestor Backend](https://github.com/TraFost/orchestor-be) - Hono + Supabase API for content orchestration
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Development
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Build for Production
 
-## Deploy on Vercel
+```bash
+npm run build
+npm run start
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Linting
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run lint
+```
+
+## License
+
+MIT License © 2025 AgentBunnies. See LICENSE for details.
