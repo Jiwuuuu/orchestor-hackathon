@@ -41,7 +41,7 @@ const initialSteps: PipelineStep[] = [
   }
 ]
 
-export function ProcessingLoader({ onComplete }: { onComplete?: () => void }) {
+export function ProcessingLoader() {
   const [steps, setSteps] = useState<PipelineStep[]>(initialSteps)
   const [currentStep, setCurrentStep] = useState(1)
 
@@ -58,13 +58,14 @@ export function ProcessingLoader({ onComplete }: { onComplete?: () => void }) {
           : step
       ))
     } else if (currentStepData.status === 'in_progress') {
-      // Progress the step
+      // Progress the step - slower for ~10 seconds per step
       const interval = setInterval(() => {
         setSteps(prev => {
           const step = prev.find(s => s.id === currentStep)
           if (!step || step.progress === undefined) return prev
 
-          const newProgress = Math.min((step.progress || 0) + Math.random() * 15 + 10, 100)
+          // Slower increment: 3-5% every 500ms = ~10 seconds per step
+          const newProgress = Math.min((step.progress || 0) + Math.random() * 2 + 3, 100)
           
           if (newProgress >= 100) {
             clearInterval(interval)
@@ -106,11 +107,11 @@ export function ProcessingLoader({ onComplete }: { onComplete?: () => void }) {
 
       return () => clearInterval(interval)
     } else if (currentStepData.status === 'complete') {
-      // Move to next step
+      // Move to next step with shorter delay
       if (currentStep < steps.length) {
         setTimeout(() => {
           setCurrentStep(prev => prev + 1)
-        }, 800)
+        }, 300)
       }
     }
   }, [currentStep, steps])
@@ -119,7 +120,6 @@ export function ProcessingLoader({ onComplete }: { onComplete?: () => void }) {
     <ProcessingPipeline
       steps={steps}
       currentStep={currentStep}
-      onComplete={onComplete}
     />
   )
 }

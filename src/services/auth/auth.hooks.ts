@@ -80,16 +80,15 @@ export const useSignUpMutation = (
 }
 
 /**
- * Mutation hook for OAuth sign in (Google/Apple)
+ * Mutation hook for OAuth sign in (Google via Supabase)
  *
  * Usage:
  * ```tsx
  * const oauthMutation = useOAuthSignInMutation()
  *
- * const handleGoogleSignIn = async (googleToken: string) => {
+ * const handleGoogleSignIn = async (supabaseToken: string) => {
  *   const user = await oauthMutation.mutateAsync({
- *     provider: "google",
- *     token: googleToken
+ *     token: supabaseToken
  *   })
  *   router.push("/dashboard")
  * }
@@ -115,8 +114,9 @@ export const useOAuthSignInMutation = (
  *
  * Features:
  * - Uses session cookie for authentication (no token needed)
- * - Automatically refetches when invalidated
- * - Uses React Query cache with 5-minute stale time
+ * - Fetches once on mount, then caches
+ * - Does not retry on failure (prevents infinite loops)
+ * - Does not refetch on window focus or reconnect
  *
  * Usage:
  * ```tsx
@@ -134,6 +134,9 @@ export const useCurrentUserQuery = (
     queryKey: authKeys.me(),
     queryFn: getCurrentUser,
     retry: false, // Don't retry on 401 (just redirect)
+    refetchOnWindowFocus: false, // Don't refetch when user focuses window
+    refetchOnReconnect: false, // Don't refetch when reconnecting
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
     ...options,
   })
 
