@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(if not exist \"src\\services\\tasks\\index.ts\" echo.)",
-      "Bash(\"src\\services\\tasks\\index.ts\")"
+      "Bash(\"src\\services\\tasks\\index.ts\")",
+      "Bash(if exist \"src\\services\\tasks\\index.ts\" echo.)",
+      "Bash(test:*)"
     ],
     "deny": [],
     "ask": []
