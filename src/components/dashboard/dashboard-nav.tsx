@@ -1,16 +1,17 @@
 'use client'
 
-import { useRouter, usePathname } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useLogoutMutation } from '@/services/auth'
 
 export function DashboardNav() {
-    const router = useRouter()
     const pathname = usePathname()
+    const logoutMutation = useLogoutMutation()
 
     const handleSignOut = () => {
-        // TODO: Backend sign out logic
-        router.push('/')
+        // Clear cache and redirect to auth page
+        logoutMutation.mutate()
     }
 
     const navLinks = [

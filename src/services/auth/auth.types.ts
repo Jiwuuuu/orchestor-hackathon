@@ -35,9 +35,7 @@ export type SignUpPayload = {
  * OAuth sign-in request payload
  */
 export type OAuthSignInPayload = {
-  provider: "google" | "apple"
   token: string
-  accessToken?: string
 }
 
 /**
